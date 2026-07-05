@@ -1,0 +1,28 @@
+# git-issue — skill-manager unit manifest.
+#
+# Transitive dependencies are HARD skill_references so that installing this
+# skill pulls in the three skills the issue workflow drives. Coordinates are
+# git repo roots (github:owner/repo), NOT installed skill names — the resolver
+# clones the repo and detects the unit from its root marker files. Note the
+# repo name often differs from the [skill].name it installs:
+#
+#   github:haydenrear/test_graph_skill  -> skill "test-graph"
+#   github:haydenrear/tla-spec-dev      -> skill "spec-double-compiler" (installs the tla-spec-dev CLI)
+#   github:haydenrear/deploy-cdc        -> skill "deploy-helm"
+skill_references = [
+  "github:haydenrear/test_graph_skill",
+  "github:haydenrear/tla-spec-dev",
+  "github:haydenrear/deploy-cdc",
+]
+
+# The GitHub CLI, installed via Homebrew. This is the default issue-tracker
+# adapter (see references/github-gh.md). Other trackers are supported by
+# swapping the adapter; gh is the only one wired as a hard CLI dependency.
+[[cli_dependencies]]
+spec = "brew:gh"
+on_path = "gh"
+
+[skill]
+name = "git-issue"
+version = "0.1.0"
+description = "Create tracker issues (GitHub via gh) that drive a discovery-first change workflow: references section, worktree/feature branch, optional TLA+ spec workflow, and a regression/close-out checklist."
