@@ -5,6 +5,16 @@ feature branch** — never on the default branch, never in the primary checkout.
 This keeps the change isolated, lets the spec workflow (which generates files)
 run without polluting the main tree, and makes the branch↔issue link explicit.
 
+## Epic assignment override
+
+Before embedding the ordinary command below, check for the
+`git-epic-workflow:assignment:start` marker. When present, the assignment in
+`references/epic-assignment.md` wins: use its exact feature branch and worktree,
+wait until every `depends_on` PR is merged into the declared remote epic branch,
+fetch, and create the worktree from the latest `origin/epic/<slug>`. Never
+substitute `origin/<default-branch>` in epic mode. The ticket PR also targets the
+declared epic branch rather than the default branch.
+
 ## Naming
 
 - Branch: `feature/<issue-number>-<short-slug>` (e.g. `feature/142-retry-budget`).
@@ -38,3 +48,6 @@ worktree:
 ```bash
 git worktree remove ../wt-<issue-number>-<slug>
 ```
+
+For an epic ticket, external review owns merge and issue close. Do not remove
+the worktree merely because the ticket agent opened its PR.

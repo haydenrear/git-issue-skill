@@ -36,6 +36,16 @@ To read it back:
 gh issue view <number> --json number,url,title,body
 ```
 
+## Scheduling an issue in an epic
+
+Use the exact marker-delimited block in `references/epic-assignment.md`. For a
+new issue, create the standard work order, capture the issue number/URL, record
+that URL against its one planned spec ticket, then update the body with final
+branch/worktree fields. For an existing issue, read its current body, preserve
+everything outside the markers, and replace only the bounded assignment with
+`gh issue edit --body-file`. A resume updates the existing block; it never
+appends a duplicate.
+
 ## The References section is the discovery starting point
 
 The `## References` block is the most load-bearing part of the body: it is the
@@ -72,3 +82,7 @@ branch (`Closes #<number>` in the PR body) or explicitly:
 ```bash
 gh issue close <number> --comment "<summary of tests run + reports attached>"
 ```
+
+This closing behavior is ordinary mode only. An epic ticket PR targets the epic
+branch with `Refs #<number>` and stops for external review; the ticket agent does
+not close the GitHub issue.

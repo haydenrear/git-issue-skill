@@ -4,6 +4,33 @@ The issue's final section is a checklist that tells the implementer exactly how
 to prove the change is safe and finish it. Name these concretely during
 discovery so the implementer runs them without guessing.
 
+## Epic assignment override
+
+When the issue contains an epic assignment, its validation matrix and evidence
+root are mandatory and override generic examples below. Run the exact TLC,
+spec-unit, repository-unit, and named graph commands (or retain the explicit
+`N/A: <reason>`), store their reports below `validation.evidence_root`, and pass
+those paths to `tla-spec-dev ... close ticket <stable-ticket-id>`. Close and
+promote only the assigned ticket after reconciling the latest epic tip and
+rerunning the full matrix; never use `--accept-new` or the whole-workflow close
+script.
+
+Use the repository-specific graph names in the assignment. `specWorkflow` is
+the tla-spec-dev repository's own CLI-lifecycle graph and is not implicitly
+required in other repositories.
+
+```bash
+tla-spec-dev --spec-root specs close ticket <stable-ticket-id> \
+  --summary "<what landed>" \
+  --result <evidence-path> \
+  --result <another-evidence-path>
+```
+
+After commit and push, open a PR whose base is `ticket.pr_base` (the epic branch)
+and whose body uses `Refs #<issue-number>`. Include the exact commands, evidence
+paths, close-history path, and resulting commit SHA, then stop for external
+review. Do not self-merge, target the default branch, or close the GitHub issue.
+
 ## 1. Run the regression test graphs
 
 List the specific `test_graph` graphs that cover the changed surface (from
@@ -51,6 +78,10 @@ git push -u origin feature/<issue-number>-<slug>
 
 Then open the PR (`Closes #<issue-number>`) or close the issue with a summary of
 the graphs run and reports attached (`references/github-gh.md`).
+
+That final sentence applies only to an ordinary issue. Epic ticket PRs use
+`Refs`, remain open for external review, and leave issue closing to epic
+finalization.
 
 ## Checklist to embed in the issue
 

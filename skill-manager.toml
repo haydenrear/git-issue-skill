@@ -24,5 +24,5 @@ on_path = "gh"
 
 [skill]
 name = "git-issue"
-version = "0.1.0"
-description = "Create tracker issues (GitHub via gh) that drive a discovery-first change workflow: references section, worktree/feature branch, optional TLA+ spec workflow, and a regression/close-out checklist."
+version = "0.2.0"
+description = "Create discovery-first tracker work orders with references, worktree/branch instructions, optional TLA+ close-out, and bounded assignments for one ticket in an existing epic shared workflow."
