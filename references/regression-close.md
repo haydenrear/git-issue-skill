@@ -83,6 +83,44 @@ That final sentence applies only to an ordinary issue. Epic ticket PRs use
 `Refs`, remain open for external review, and leave issue closing to epic
 finalization.
 
+## 6. Close out the worktree's Skill Manager home before removing it
+
+The last thing an implementer does is delete the worktree, and that deletes
+`<worktree>/.skill-manager` with it — without asking, and just as quietly whether
+the home held a week of skill edits or nothing. The home is gitignored, so steps
+1–5 have proved nothing about it: no graph report, no spec ticket, no PR and no
+fan-out contains any of it.
+
+So the issue has to name the gate. It is one command, and it writes nothing:
+
+```bash
+skill-manager home close-out --home <worktree>/.skill-manager \
+                             --into <repo-root>/.skill-manager
+```
+
+`--into` is the **project** home the worktree's was cloned from, never
+`~/.skill-manager`. Exit 0 means there is provably nothing to lose. Non-zero names
+every blocking unit with the literal command that clears it, and there are two
+shapes, answering different questions:
+
+- `skill-manager home sync --from <worktree>/.skill-manager --to <repo-root>/.skill-manager --merge`
+  moves the edit **up a tier** so the teardown does not take it. Local to this
+  machine. A conflict is reported, never resolved, and a conflicted unit writes
+  nothing.
+- `skill-manager unit publish <unit> --ticket <issue-number>` puts it in the
+  **unit's own git repository**. This is the only route that reaches another
+  project or outlives this machine, and it is the one owed for a skill the
+  implementer improved while working the ticket.
+
+In an integration repo, tell them to run
+`<git-integration-repo-skill>/scripts/close-change.sh <ticket>` instead: it runs
+the same gate, refuses the removal on a non-zero verdict, and only then removes
+the worktree.
+
+If the repository has no per-checkout home, say so explicitly rather than omitting
+the step — an omitted step reads as "nothing to do here", which is exactly the
+state this gate exists to distinguish from "checked, nothing to lose".
+
 ## Checklist to embed in the issue
 
 - [ ] Named test graphs pass (incl. tla-spec-dev spec-graph integration graph)
@@ -91,3 +129,5 @@ finalization.
 - [ ] Spec unit tests pass
 - [ ] Unit tests pass
 - [ ] Committed and pushed to `feature/<issue-number>-<slug>`
+- [ ] `home close-out` clean (or every blocker cleared with `unit publish` /
+      `home sync --merge`) **before** `git worktree remove`
