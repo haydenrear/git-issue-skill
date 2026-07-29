@@ -116,10 +116,14 @@ open questions the implementer should resolve first>
 Create a dedicated worktree and feature branch before editing:
 `git worktree add ../wt-<issue-slug> -b feature/<issue-number>-<slug>`
 The worktree carries its own Skill Manager home at `<worktree>/.skill-manager`
-(a copy, gitignored). Bootstrap it right after creation and before anything that
-installs/syncs/binds/resolves; launch through its `bin/launch/` shims; publish any
-skill edit you make inside it with `skill-manager unit publish` — it is in no diff
-and is deleted with the worktree.
+(a copy, gitignored). Create it right after the worktree and before anything that
+installs/syncs/binds/resolves:
+`<git-integration-repo-skill>/scripts/bootstrap-home.sh --root ../wt-<issue-number>-<slug>`
+(an integration repo's `new-change.sh` already did this).
+Launch through `<worktree>/.skill-manager/bin/launch/{claude,codex,gemini}`.
+Any skill edit you make inside that home is in no diff and is deleted with the
+worktree — publish it with
+`skill-manager unit publish <unit> --ticket <issue-number>`.
 (see references/worktree-branch.md)
 
 ## Spec workflow — REQUIRED | NOT REQUIRED

@@ -99,9 +99,16 @@ skill-manager home close-out --home <worktree>/.skill-manager \
 ```
 
 `--into` is the **project** home the worktree's was cloned from, never
-`~/.skill-manager`. Exit 0 means there is provably nothing to lose. Non-zero names
-every blocking unit with the literal command that clears it, and there are two
-shapes, answering different questions:
+`~/.skill-manager`. Exit 0 means there is provably nothing to lose. Of the three
+non-zero exits, only **exit 1** is a verdict about the work, and only it prints
+blockers: **exit 2** means the `--home` path is not a home at all (usually the
+worktree directory instead of its `.skill-manager`) and **exit 9** means the
+destination home is frozen so nothing was attempted. Tell the implementer to
+distinguish them, or a frozen destination reads as "blocked" and a typo reads as
+"broken".
+
+Exit 1 names every blocking unit with the literal command that clears it, and
+there are two shapes, answering different questions:
 
 - `skill-manager home sync --from <worktree>/.skill-manager --to <repo-root>/.skill-manager --merge`
   moves the edit **up a tier** so the teardown does not take it. Local to this

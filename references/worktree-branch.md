@@ -93,14 +93,22 @@ it:
 
 ```bash
 skill-manager home close-out --home ../wt-<issue-number>-<slug>/.skill-manager \
-                             --into <repo-root>/.skill-manager
-git worktree remove ../wt-<issue-number>-<slug>
+                             --into <repo-root>/.skill-manager \
+  && git worktree remove ../wt-<issue-number>-<slug>
 ```
 
-A non-zero verdict names each blocking unit and the literal command that clears it
-— `skill-manager unit publish <unit>` to reach the unit's own repository, or
+Keep the `&&` when you embed this. An issue body gets pasted verbatim, and two
+commands on separate lines run the removal whatever the gate returned — which is
+the exact loss the gate exists to prevent.
+
+**Exit 1** names each blocking unit and the literal command that clears it —
+`skill-manager unit publish <unit>` to reach the unit's own repository, or
 `skill-manager home sync --from … --to … --merge` to lift it into the project home
-so the teardown does not take it. In an integration repo,
+so the teardown does not take it. **Exit 2** means the `--home` path is not a home
+at all (usually the worktree directory was passed instead of its
+`.skill-manager`), and **exit 9** means the destination home is frozen so nothing
+was attempted; neither prints blockers, because neither assessed anything. In an
+integration repo,
 `<git-integration-repo-skill>/scripts/close-change.sh <ticket>` runs the gate and
 the removal in that order and refuses on a non-zero verdict. Put whichever of
 these applies in the issue's close-out checklist; the implementer will not invent
