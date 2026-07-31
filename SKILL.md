@@ -56,7 +56,9 @@ tracker, keep every step below and swap only the create/comment/close commands.
    `gh issue create`. See `references/github-gh.md` and the template below.
 3. **Instruct a worktree + feature branch.** The issue tells the implementer to
    create a dedicated git worktree and feature branch named for the issue before
-   touching anything. An epic assignment instead names the exact worktree and
+   touching anything, **and what to do about the worktree's own Skill Manager
+   home** — how it is created, that a skill edit inside it is in no diff, and that
+   teardown is gated. An epic assignment instead names the exact worktree and
    branch created from the epic branch. See `references/worktree-branch.md` and
    `references/epic-assignment.md`.
 4. **Decide the spec workflow.** During discovery, decide whether the change
@@ -113,6 +115,15 @@ open questions the implementer should resolve first>
 ## Worktree & branch
 Create a dedicated worktree and feature branch before editing:
 `git worktree add ../wt-<issue-slug> -b feature/<issue-number>-<slug>`
+The worktree carries its own Skill Manager home at `<worktree>/.skill-manager`
+(a copy, gitignored). Create it right after the worktree and before anything that
+installs/syncs/binds/resolves:
+`<git-integration-repo-skill>/scripts/bootstrap-home.sh --root ../wt-<issue-number>-<slug>`
+(an integration repo's `new-change.sh` already did this).
+Launch through `<worktree>/.skill-manager/bin/launch/{claude,codex,gemini}`.
+Any skill edit you make inside that home is in no diff and is deleted with the
+worktree — publish it with
+`skill-manager unit publish <unit> --ticket <issue-number>`.
 (see references/worktree-branch.md)
 
 ## Spec workflow — REQUIRED | NOT REQUIRED
@@ -131,6 +142,9 @@ Run these to close the issue:
 - Close the spec ticket via spec-double-compiler + tla-spec-dev
 - Run spec unit tests and unit tests
 - Commit and push to `feature/<issue-number>-<slug>`
+- Run `skill-manager home close-out --home <worktree>/.skill-manager --into <repo-root>/.skill-manager`
+  and clear every blocker **before** `git worktree remove` (integration repo:
+  `close-change.sh <ticket>`, which gates the removal itself)
 ```
 
 For epic mode, retain every standard section above and insert the rendered
