@@ -28,8 +28,9 @@ tla-spec-dev --spec-root specs close ticket <stable-ticket-id> \
 
 After commit and push, open a PR whose base is `ticket.pr_base` (the epic branch)
 and whose body uses `Refs #<issue-number>`. Include the exact commands, evidence
-paths, close-history path, and resulting commit SHA, then stop for external
-review. Do not self-merge, target the default branch, or close the GitHub issue.
+paths, close-history path, resulting commit SHA, and the `## Goal contribution`
+section below, then stop for external review. Do not self-merge, target the
+default branch, or close the GitHub issue.
 
 ## 1. Run the regression test graphs
 
@@ -66,9 +67,65 @@ Before committing, run both layers and require green:
 - **Spec unit tests** — the generated/spec-double unit tests (spec-double-compiler).
 - **Unit tests** — the repo's own unit test suite for the changed code.
 
-## 5. Commit and push to the feature branch
+## 5. Report the goal contribution
 
-Only after 1–4 pass:
+Steps 1–4 prove nothing broke. This step reports whether anything got better.
+The PR body carries a `## Goal contribution` section with **one row per goal**
+the issue declared in `## Goals & evaluation`:
+
+```markdown
+## Goal contribution
+
+| Goal | Contribution | Expected effect | Measured local signal | Decided by |
+| --- | --- | --- | --- | --- |
+| <goal or N/A: reason> | direct \| enabling \| guard | <what this change should produce> | <number the signal reported, or N/A: reason> | <evaluation ticket, or this issue's own harness run> |
+```
+
+Run the declared local signal in the ticket worktree before opening the PR,
+store its output with the other evidence, and record which of these happened:
+moved as expected, moved less than expected, no measurable movement, or moved
+the wrong way. An issue that recorded `N/A: <reason>` for its goal reproduces
+that reason here rather than dropping the section.
+
+**The local signal is a signal, not a gate.** It does not decide whether the
+ticket passes — the required tests and graphs do that, and the deciding harness
+decides the goal. So:
+
+- a missed or wrong-way signal is **reported, never hidden**. "No measurable
+  movement" is a legitimate, useful row;
+- it never justifies weakening a required test, loosening an assertion, marking
+  a graph node skipped, or relaxing an invariant to make a number look better;
+- it never justifies tuning to the metric or widening the change beyond the
+  issue's stated scope. A signal showing the goal is unreachable from this slice
+  is *plan feedback*: finish the stated change, report the finding, and let the
+  goal be re-scoped.
+
+### Evaluation issues report differently
+
+An issue whose slice **is** the measurement — an eval, perf, or integration
+issue that decides a goal — reports baseline → measured → target with a verdict
+instead of an expected effect:
+
+```markdown
+## Goal contribution
+
+| Goal | Baseline | Measured | Target | Verdict |
+| --- | --- | --- | --- | --- |
+| <goal> | <value + commit it was measured on> | <what the harness reported> | <threshold> | met \| missed \| unmeasured: <reason> |
+```
+
+Run the harness from a fresh start on the integrated branch, after the work it
+evaluates has landed. Then: **never edit a target to match a result**, and never
+re-run selectively until a number passes — report the run that happened. A
+missed goal is a decision for the owner (add work, accept the shortfall with a
+recorded reason, or re-scope the goal), not something for the evaluation issue
+to fix by adjusting what it measures. `unmeasured` is only acceptable with a
+reason; a silently unmeasured goal is the failure this whole section exists to
+prevent.
+
+## 6. Commit and push to the feature branch
+
+Only after 1–5 pass:
 
 ```bash
 git add -A
@@ -83,12 +140,12 @@ That final sentence applies only to an ordinary issue. Epic ticket PRs use
 `Refs`, remain open for external review, and leave issue closing to epic
 finalization.
 
-## 6. Close out the worktree's Skill Manager home before removing it
+## 7. Close out the worktree's Skill Manager home before removing it
 
 The last thing an implementer does is delete the worktree, and that deletes
 `<worktree>/.skill-manager` with it — without asking, and just as quietly whether
 the home held a week of skill edits or nothing. The home is gitignored, so steps
-1–5 have proved nothing about it: no graph report, no spec ticket, no PR and no
+1–6 have proved nothing about it: no graph report, no spec ticket, no PR and no
 fan-out contains any of it.
 
 So the issue has to name the gate. It is one command, and it writes nothing:
@@ -139,6 +196,12 @@ state this gate exists to distinguish from "checked, nothing to lose".
 - [ ] Spec ticket closed via spec-double-compiler + tla-spec-dev
 - [ ] Spec unit tests pass
 - [ ] Unit tests pass
+- [ ] Local signal run and recorded; `## Goal contribution` in the PR body names
+      the expected effect, the measured result (or `N/A: reason`), and what
+      decides the goal — including "no measurable movement"
+- [ ] Evaluation issues only: baseline → measured → target with a
+      `met` / `missed` / `unmeasured: <reason>` verdict per goal, from the run
+      that actually happened
 - [ ] Committed and pushed to `feature/<issue-number>-<slug>`
 - [ ] Worktree torn down with `"$WT" close <issue-number>-<slug>` (the gate runs
       first; clear every blocker it names with `unit publish` / `home sync

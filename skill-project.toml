@@ -42,8 +42,8 @@
 
 [project]
 name = "git-issue"
-version = "0.2.0"
-description = "Discovery-first tracker work orders: references sections, worktree/branch instructions, optional TLA+ spec close-out, and bounded assignments for one ticket in an epic shared workflow."
+version = "0.3.0"
+description = "Discovery-first tracker work orders: references sections, goal/evaluation linkage with the command that decides it, worktree/branch instructions, optional TLA+ spec close-out, and bounded assignments for one ticket in an epic shared workflow."
 
 # --- authoring: skill-publisher is the authority on SKILL.md frontmatter, the
 #     description field, skill-manager.toml, references/ pages, and on the

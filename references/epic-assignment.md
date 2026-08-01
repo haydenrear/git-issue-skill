@@ -6,15 +6,26 @@ ticket in `specs/desired_program_model/ticket_plan.yaml`. `git-issue` authors th
 work order; it does not create those workflow-wide artifacts.
 
 Each GitHub issue maps to exactly one stable spec ticket. Keep the ordinary
-Summary, References, Discovery notes, Worktree & branch, Spec workflow, and
-Regression & close-out sections, then add this bounded assignment after the
-completed Summary section and before References. Its presence selects epic mode
-and overrides every ordinary instruction to branch from, open a PR against,
-merge to, or close against the default branch.
+Summary, Goals & evaluation, References, Discovery notes, Worktree & branch,
+Spec workflow, and Regression & close-out sections, then add this bounded
+assignment after the completed Summary section and before the
+`## Goals & evaluation` section. Its presence selects epic mode and overrides
+every ordinary instruction to branch from, open a PR against, merge to, or close
+against the default branch.
+
+The prose `## Goals & evaluation` section is rendered *from* this block rather
+than agreed separately with the user — the epic already agreed the goals and
+recorded them in its canonical plan. This block is the machine-readable copy the
+ticket agent reads; the prose section restates it for a human and must not
+introduce a metric, baseline, target, or contribution the plan does not carry.
 
 ## Assignment block
 
-Render every field; do not leave placeholders in a dispatched issue.
+Render every field; do not leave placeholders in a dispatched issue. Goal fields
+and their names come from
+`<git-epic-workflow-skill>/references/goals-and-evaluation.md` and the plan
+schema `<git-epic-workflow-skill>/scripts/validate_epic_plan.py` enforces — a
+rename on either side breaks the assignment↔plan equality check below.
 
 ````markdown
 <!-- git-epic-workflow:assignment:start -->
@@ -40,12 +51,26 @@ ticket:
   wave: 1
   promotion_order: 10
   promotion_predecessor: null
+  role: implementation      # implementation | evaluation
   conflict_keys:
     production: []
     tla: []
     adapters: []
     test_graph: []
     workflow: []
+goals:
+  - goal: "<goal-id>"
+    kind: "perf"            # perf | eval | integration | quality
+    statement: "<what should be measurably better after the epic>"
+    metric: "<measured quantity>"
+    baseline: "<value + commit it was measured on, or 'unmeasured'>"
+    target: "<threshold that counts as success>"
+    decided_by:
+      ticket: "<evaluation-ticket-id>"
+      harness: "<command the evaluation ticket runs on the integrated epic>"
+    contribution: "direct"  # direct | enabling | guard
+    expected_effect: "<direction and magnitude this ticket should produce>"
+    local_signal: "<cheap in-worktree command, or 'N/A: reason'>"
 validation:
   tlc: "<exact command or N/A: reason>"
   spec_unit: "<exact command>"
@@ -62,6 +87,14 @@ review:
 This issue belongs to an existing shared spec workflow. The epic assignment
 overrides ordinary instructions to branch from or target the default branch.
 
+- Read `goals` before implementing. The `expected_effect` is the result this
+  change is aiming at; the ticket named in `decided_by` decides the goal on the
+  integrated epic. Run `local_signal` before close, record the number under the
+  evidence root, and report it against `expected_effect` — including "no
+  measurable movement".
+- A local signal is a signal, not a gate. A missed one is reported, never
+  hidden, and never justifies weakening the REQUIRED validation matrix, tuning
+  to the metric, or working outside this ticket's conflict keys.
 - Start the worktree from the latest `origin/epic/<slug>` after all
   `depends_on` PRs are merged.
 - Run `tla-spec-dev --spec-root specs open ticket <stable-ticket-id>`; never
@@ -76,6 +109,40 @@ overrides ordinary instructions to branch from or target the default branch.
 <!-- git-epic-workflow:assignment:end -->
 ````
 
+## Evaluation-ticket variant
+
+A ticket that *decides* one or more goals rather than contributing to them sets
+`role: evaluation`, lists `owns_goals`, and replaces the per-goal contribution
+block with the harness it must run:
+
+```yaml
+ticket:
+  role: evaluation
+  owns_goals: ["<goal-id>"]
+goals:
+  - goal: "<goal-id>"
+    baseline: "<value + commit>"
+    target: "<threshold>"
+    harness: "<exact command run on the integrated epic tip>"
+    evidence_root: "<results/epic-<slug>/goals/<goal-id>>"
+    contribution: "guard"
+    expected_effect: "decides the goal; adds no behavioral delta"
+    local_signal: "N/A: this ticket is the measurement"
+```
+
+`owns_goals` must list every goal whose canonical `evaluation_ticket` is this
+ticket — no more and no fewer. Its issue body states, in addition to the shared
+assignment rules:
+
+- run each owned `harness` from a fresh start on the reconciled epic tip, after
+  every contributing ticket has merged, and write results to `evidence_root`;
+- report baseline → measured → target and a verdict (`met` / `missed` /
+  `unmeasured` with a reason) per goal in the PR body;
+- never edit a target to match a result and never re-run selectively until a
+  number passes — report the run that happened;
+- file regressions and shortfalls back to the epic owner instead of fixing them
+  in this ticket.
+
 ## Validate before dispatch
 
 - `epic.branch` exists remotely, `base_sha` and `plan_commit` are reachable
@@ -85,9 +152,31 @@ overrides ordinary instructions to branch from or target the default branch.
   identifies exactly one entry in its canonical ticket plan. The GitHub issue
   URL is recorded on that same entry.
 - `schedule_revision`, `depends_on`, `blocks`, `wave`, conflict keys,
-  `promotion_order`, `promotion_predecessor`, the validation matrix, and the
-  evidence root exactly match the canonical plan entry. The assignment does not
-  silently revise workflow-wide planning data.
+  `promotion_order`, `promotion_predecessor`, `role`, the goal relations, the
+  validation matrix, and the evidence root exactly match the canonical plan
+  entry. The assignment does not silently revise workflow-wide planning data.
+- **Goal relations are copied, not authored.** Every entry under `goals:` comes
+  from the canonical plan: `goal` is a goal ID declared in the plan's
+  `epic_goals`, and `contribution`, `expected_effect` and `local_signal` equal
+  that plan entry's `goals` relation field for field. `kind`, `statement`,
+  `metric`, `baseline`, and `target` are the plan's `epic_goals` values for that
+  ID, and `decided_by.ticket` / `decided_by.harness` are that goal's
+  `evaluation_ticket` and `harness`. A value that exists only in the issue is a
+  dispatch error, not a local refinement — fix the plan, then re-render.
+- `contribution` is one of `direct`, `enabling`, or `guard`, and
+  `expected_effect` is non-empty in every case (`none — enabling only` plus what
+  it unblocks, for `enabling`). `local_signal` is a runnable command or
+  `N/A: <reason>`, never an empty string. A `direct` contribution with no local
+  signal is allowed but is worth questioning: nothing then predicts the final
+  measurement from inside the worktree.
+- `ticket.role` is `implementation` or `evaluation`. When it is `evaluation`,
+  `owns_goals` lists exactly the goals whose `evaluation_ticket` is this ticket,
+  each goal entry carries `harness` and `evidence_root`, and the ticket promotes
+  after every contributor to those goals. When it is `implementation`,
+  `owns_goals` is absent.
+- The prose `## Goals & evaluation` section elsewhere in the body agrees with
+  this block. The assignment is authoritative; a disagreement is fixed before
+  dispatch rather than left for the ticket agent to adjudicate.
 - `validation.tlc`, `validation.spec_unit`, and `validation.repository_unit` are
   exact runnable commands; an inapplicable command is `N/A: <reason>`, never an
   empty string. `validation.graphs` contains exact repository graph names and
