@@ -15,22 +15,70 @@ fetch, and create the worktree from the latest `origin/epic/<slug>`. Never
 substitute `origin/<default-branch>` in epic mode. The ticket PR also targets the
 declared epic branch rather than the default branch.
 
+## One command, and where it is
+
+A worktree needs two things that must happen in one step: the checkout, and the
+worktree's own Skill Manager home. `wt new` does both. It handles a plain repo
+and an integration repo identically — it detects which it is standing in — so
+there is exactly one instruction to embed, whatever the target repository is.
+
+**Spell it resolved.** The script is shipped by the `git-integration-repo` unit,
+and an installed unit's files live at `$SKILL_MANAGER_HOME/skills/<unit>/`. Write
+that path out; never write `<git-integration-repo-skill>/…` or any other
+placeholder the implementer has to resolve. That placeholder is the measured
+cause of two field failures: one agent ran the wrong script, another concluded it
+had to write its own (git-issue#4).
+
+```bash
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+```
+
+`SKILL_MANAGER_HOME` is exported by the launch shims every agent starts through;
+the `:-` fallback is what makes the same line work from a bare shell.
+
 ## Naming
 
-- Branch: `feature/<issue-number>-<short-slug>` (e.g. `feature/142-retry-budget`).
-- Worktree dir: a sibling of the repo, `../wt-<issue-number>-<slug>`, so tooling
-  and IDEs don't index it as nested.
+- Branch: `feature/<issue-number>-<short-slug>` (e.g. `feature/142-retry-budget`),
+  which is what `wt new <issue-number>-<slug>` creates.
+- Worktree dir: **`wt` chooses it** — `<parent>/<repo-name>-<ticket>`, placed
+  beside the outermost enclosing integration repo so a nested repo's worktree
+  never lands in a parent's `constituents/`. It is *not* `../wt-<ticket>`.
+  The issue must tell the implementer to read the path off the command's output
+  rather than assume one; an issue that says `cd ../wt-<slug>` sends it to a
+  directory that does not exist.
 
 ## The instruction to embed in the issue
 
 ```bash
-# from the repo root, branching off the up-to-date default branch
-git fetch origin
-git worktree add ../wt-<issue-number>-<slug> -b feature/<issue-number>-<slug> origin/main
-cd ../wt-<issue-number>-<slug>
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+
+# from anywhere inside the repo
+"$WT" new <issue-number>-<slug>
+# -> created worktree /path/to/<repo>-<issue-number>-<slug>
+cd /path/to/<repo>-<issue-number>-<slug>     # the path it just printed
 ```
 
-Adjust `origin/main` to the repo's default branch.
+A successful run prints that one line and nothing on stderr. To branch from
+something other than the current HEAD, pass it: `"$WT" new <ticket> origin/main`.
+
+**The one refusal worth pre-empting.** On the first ticket in a repository that
+has never been given a home, `wt new` exits **3**:
+
+```
+error creating worktree: no Skill Manager home could be created for this worktree
+  (usually: /path/to/repo has no project home yet)
+fix: /path/to/home/skills/git-integration-repo/scripts/bootstrap-home.sh --root /path/to/repo
+log: /tmp/wt-XXXXXX-run.log
+```
+
+The `fix:` line is already absolute and already resolved — run it verbatim, then
+re-run the same `wt new`. It is a one-time step **per repository**, not per
+worktree, and it is why the issue should say "if it exits 3, run the fix line it
+prints" instead of leaving the implementer to interpret a refusal.
+
+Everything else `wt` can tell you is on demand and costs nothing until asked:
+`"$WT" info <ticket>` prints WORKTREE / BRANCH / LAUNCH / IF-EXIT-8 / CLOSE (and
+PROPAGATE, only in an integration repo) for a worktree that already exists.
 
 ## What the issue must say about the worktree's Skill Manager home
 
@@ -57,13 +105,17 @@ State it concretely rather than in the abstract, e.g.:
 
 ```markdown
 ## Worktree & branch
-Create a dedicated worktree and feature branch before editing:
-`git worktree add ../wt-<issue-number>-<slug> -b feature/<issue-number>-<slug> origin/main`
+Create the worktree AND its own Skill Manager home with ONE command, from the
+repo root. Same command for a plain repo and an integration repo:
+`WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"`
+`"$WT" new <issue-number>-<slug>`
 
-The worktree carries its own Skill Manager home. Bootstrap it immediately after
-creation and before any `install`/`sync`/`bind`/`project resolve`
-(an integration repo's `new-change.sh` does this for you):
-`<git-integration-repo-skill>/scripts/bootstrap-home.sh --root ../wt-<issue-number>-<slug>`
+It prints `created worktree <path>` — cd to that path (it is
+`<parent>/<repo>-<issue-number>-<slug>`, not `../wt-...`).
+If it exits 3 with "no project home yet", run the absolute `fix:` line it printed
+(one time for this repository), then re-run the same `wt new`.
+Do not substitute `git worktree add` — that leaves the worktree with no home, and
+an agent launched in it writes the operator's global `~/.skill-manager`.
 
 Launch agents through `<worktree>/.skill-manager/bin/launch/{claude,codex,gemini}`.
 If you improve a skill while working this ticket, that edit lives in the
@@ -92,14 +144,23 @@ worktree — but **the home is checked first**, because the removal is what dest
 it:
 
 ```bash
-skill-manager home close-out --home ../wt-<issue-number>-<slug>/.skill-manager \
-                             --into <repo-root>/.skill-manager \
-  && git worktree remove ../wt-<issue-number>-<slug>
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+"$WT" close <issue-number>-<slug>
 ```
 
-Keep the `&&` when you embed this. An issue body gets pasted verbatim, and two
-commands on separate lines run the removal whatever the gate returned — which is
-the exact loss the gate exists to prevent.
+One command, both repo shapes, and it runs the gate and the removal **in that
+order**, refusing the removal on a non-zero verdict. Prefer it to spelling the
+two steps out: an issue body gets pasted verbatim, and two commands on separate
+lines run the removal whatever the gate returned — which is the exact loss the
+gate exists to prevent. (If you do spell them out, the `&&` is load-bearing:
+`skill-manager home close-out --home <worktree>/.skill-manager --into
+<repo-root>/.skill-manager && git worktree remove <worktree>`.)
+
+`wt close` resolves the ticket by searching where ticket worktrees live, so it
+works from a checkout other than the one that opened the worktree — but it must
+be run from inside **some** git repository; from a non-repo directory it exits 1
+with `not inside a git repository`. A successful close prints one line naming the
+worktree, the branch that outlives it, and the home tier its skill work reached.
 
 **Exit 1** names each blocking unit and the literal command that clears it —
 `skill-manager unit publish <unit>` to reach the unit's own repository, or
@@ -107,12 +168,10 @@ the exact loss the gate exists to prevent.
 so the teardown does not take it. **Exit 2** means the `--home` path is not a home
 at all (usually the worktree directory was passed instead of its
 `.skill-manager`), and **exit 9** means the destination home is frozen so nothing
-was attempted; neither prints blockers, because neither assessed anything. In an
-integration repo,
-`<git-integration-repo-skill>/scripts/close-change.sh <ticket>` runs the gate and
-the removal in that order and refuses on a non-zero verdict. Put whichever of
-these applies in the issue's close-out checklist; the implementer will not invent
-it.
+was attempted; neither prints blockers, because neither assessed anything.
+`"$WT" close <ticket>` wraps all of this — it is the same gate followed by the
+removal, in an integration repo and a plain one alike. Put it in the issue's
+close-out checklist; the implementer will not invent it.
 
 For an epic ticket, external review owns merge and issue close. Do not remove
 the worktree merely because the ticket agent opened its PR — but do run the gate
