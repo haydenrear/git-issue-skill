@@ -84,8 +84,9 @@ the issue declared in `## Goals & evaluation`:
 Run the declared local signal in the ticket worktree before opening the PR,
 store its output with the other evidence, and record which of these happened:
 moved as expected, moved less than expected, no measurable movement, or moved
-the wrong way. An issue that recorded `N/A: <reason>` for its goal reproduces
-that reason here rather than dropping the section.
+the wrong way. An issue that recorded `N/A: <reason>` for its goal keeps the row
+and reproduces that reason; an issue that declared no goal at all writes
+`None declared`, so a reader can tell that apart from a goal that was ignored.
 
 **The local signal is a signal, not a gate.** It does not decide whether the
 ticket passes — the required tests and graphs do that, and the deciding harness
@@ -100,28 +101,35 @@ decides the goal. So:
   is *plan feedback*: finish the stated change, report the finding, and let the
   goal be re-scoped.
 
-### Evaluation issues report differently
+### Evaluation issues report `## Goal verdicts` instead
 
 An issue whose slice **is** the measurement — an eval, perf, or integration
 issue that decides a goal — reports baseline → measured → target with a verdict
-instead of an expected effect:
+rather than an expected effect, under a differently named heading so the two are
+never confused:
 
 ```markdown
-## Goal contribution
+## Goal verdicts
 
-| Goal | Baseline | Measured | Target | Verdict |
-| --- | --- | --- | --- | --- |
-| <goal> | <value + commit it was measured on> | <what the harness reported> | <threshold> | met \| missed \| unmeasured: <reason> |
+| Goal | Kind | Baseline | Measured | Target | Verdict | Evidence |
+| --- | --- | --- | --- | --- | --- | --- |
+| <goal> | perf \| eval \| integration \| quality | <value + commit it was measured on> | <what the harness reported> | <threshold> | met \| missed \| unmeasured | <evidence path> |
 ```
 
-Run the harness from a fresh start on the integrated branch, after the work it
-evaluates has landed. Then: **never edit a target to match a result**, and never
-re-run selectively until a number passes — report the run that happened. A
-missed goal is a decision for the owner (add work, accept the shortfall with a
-recorded reason, or re-scope the goal), not something for the evaluation issue
-to fix by adjusting what it measures. `unmeasured` is only acceptable with a
-reason; a silently unmeasured goal is the failure this whole section exists to
-prevent.
+Verdicts are exactly `met`, `missed`, or `unmeasured` (with a reason). Run the
+harness from a fresh start on the integrated branch, after the work it evaluates
+has landed. Then: **never edit a target to match a result**, and never re-run
+selectively until a number passes — report the run that happened. A missed goal
+is a decision for the owner (add work, accept the shortfall with a recorded
+reason, or re-scope the goal), not something for the evaluation issue to fix by
+adjusting what it measures. A silently unmeasured goal is the failure this whole
+section exists to prevent.
+
+The implementer's half of this contract — how the signal is run and classified,
+and how an evaluation ticket executes — is `git-issue-workflow`'s
+`references/goal-signal.md`. These two headings and their columns must stay
+identical on both sides: this skill tells the author what to ask the implementer
+for, and that skill tells the implementer what to produce.
 
 ## 6. Commit and push to the feature branch
 
@@ -198,10 +206,11 @@ state this gate exists to distinguish from "checked, nothing to lose".
 - [ ] Unit tests pass
 - [ ] Local signal run and recorded; `## Goal contribution` in the PR body names
       the expected effect, the measured result (or `N/A: reason`), and what
-      decides the goal — including "no measurable movement"
-- [ ] Evaluation issues only: baseline → measured → target with a
-      `met` / `missed` / `unmeasured: <reason>` verdict per goal, from the run
-      that actually happened
+      decides the goal — including "no measurable movement"; `None declared`
+      when the issue declared no goal
+- [ ] Evaluation issues only: `## Goal verdicts` instead — baseline → measured →
+      target with a `met` / `missed` / `unmeasured` verdict per goal, from the
+      run that actually happened
 - [ ] Committed and pushed to `feature/<issue-number>-<slug>`
 - [ ] Worktree torn down with `"$WT" close <issue-number>-<slug>` (the gate runs
       first; clear every blocker it names with `unit publish` / `home sync
