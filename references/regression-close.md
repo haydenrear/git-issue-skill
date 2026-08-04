@@ -119,10 +119,14 @@ there are two shapes, answering different questions:
   project or outlives this machine, and it is the one owed for a skill the
   implementer improved while working the ticket.
 
-In an integration repo, tell them to run
-`<git-integration-repo-skill>/scripts/close-change.sh <ticket>` instead: it runs
-the same gate, refuses the removal on a non-zero verdict, and only then removes
-the worktree.
+Tell them to run the wrapper instead of the two steps by hand — it is one
+command, it is the same in a plain repo and an integration repo, and it runs the
+gate and the removal in that order, refusing on a non-zero verdict:
+
+```bash
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
+"$WT" close <ticket>
+```
 
 If the repository has no per-checkout home, say so explicitly rather than omitting
 the step — an omitted step reads as "nothing to do here", which is exactly the
@@ -136,5 +140,6 @@ state this gate exists to distinguish from "checked, nothing to lose".
 - [ ] Spec unit tests pass
 - [ ] Unit tests pass
 - [ ] Committed and pushed to `feature/<issue-number>-<slug>`
-- [ ] `home close-out` clean (or every blocker cleared with `unit publish` /
-      `home sync --merge`) **before** `git worktree remove`
+- [ ] Worktree torn down with `"$WT" close <issue-number>-<slug>` (the gate runs
+      first; clear every blocker it names with `unit publish` / `home sync
+      --merge` and re-run — never `git worktree remove`)

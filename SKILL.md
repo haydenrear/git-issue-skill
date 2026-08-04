@@ -54,12 +54,14 @@ tracker, keep every step below and swap only the create/comment/close commands.
    discovery output as a *starting point* for the implementer — concrete files,
    symbols, specs, and docs, each as `path:line` where possible. Create it with
    `gh issue create`. See `references/github-gh.md` and the template below.
-3. **Instruct a worktree + feature branch.** The issue tells the implementer to
-   create a dedicated git worktree and feature branch named for the issue before
-   touching anything, **and what to do about the worktree's own Skill Manager
-   home** — how it is created, that a skill edit inside it is in no diff, and that
-   teardown is gated. An epic assignment instead names the exact worktree and
-   branch created from the epic branch. See `references/worktree-branch.md` and
+3. **Instruct a worktree + feature branch.** The issue embeds **one command**
+   that creates the worktree and its own Skill Manager home together — `wt new`,
+   spelled as a path that resolves without the reader looking anything up — plus
+   what to do about that home: that a skill edit inside it is in no diff, and
+   that teardown is gated. Never instruct a bare `git worktree add`; it produces
+   a worktree with no home. An epic assignment instead names the exact worktree
+   and branch created from the epic branch, and is the one case that does branch
+   by hand. See `references/worktree-branch.md` and
    `references/epic-assignment.md`.
 4. **Decide the spec workflow.** During discovery, decide whether the change
    alters observable/internal state-machine behavior. If yes, the issue names
@@ -113,13 +115,18 @@ explicitly rather than deleting it — the implementer relies on the shape.
 open questions the implementer should resolve first>
 
 ## Worktree & branch
-Create a dedicated worktree and feature branch before editing:
-`git worktree add ../wt-<issue-slug> -b feature/<issue-number>-<slug>`
-The worktree carries its own Skill Manager home at `<worktree>/.skill-manager`
-(a copy, gitignored). Create it right after the worktree and before anything that
-installs/syncs/binds/resolves:
-`<git-integration-repo-skill>/scripts/bootstrap-home.sh --root ../wt-<issue-number>-<slug>`
-(an integration repo's `new-change.sh` already did this).
+Create the worktree AND its own Skill Manager home with ONE command, from the
+repo root. It is the same command for a plain repo and an integration repo:
+`WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"`
+`"$WT" new <issue-number>-<slug>`
+It prints one line — `created worktree <path>`. **cd to the path it printed.**
+That path is `<parent>/<repo-name>-<issue-number>-<slug>`, not `../wt-...`, so
+do not guess it.
+If it exits 3 saying "no project home yet", this repository has never been given
+a home. Run the absolute `fix:` line it printed — a one-time, per-repository
+step — then run the same `wt new` again.
+Do **not** substitute `git worktree add`: that produces a worktree with no home,
+and an agent launched in it writes the operator's global `~/.skill-manager`.
 Launch through `<worktree>/.skill-manager/bin/launch/{claude,codex,gemini}`.
 Any skill edit you make inside that home is in no diff and is deleted with the
 worktree — publish it with
@@ -142,9 +149,13 @@ Run these to close the issue:
 - Close the spec ticket via spec-double-compiler + tla-spec-dev
 - Run spec unit tests and unit tests
 - Commit and push to `feature/<issue-number>-<slug>`
-- Run `skill-manager home close-out --home <worktree>/.skill-manager --into <repo-root>/.skill-manager`
-  and clear every blocker **before** `git worktree remove` (integration repo:
-  `close-change.sh <ticket>`, which gates the removal itself)
+- Tear the worktree down with `"$WT" close <issue-number>-<slug>` — one command,
+  same in both repo shapes. It runs the home close-out gate first and **refuses**
+  while the worktree still holds skill work that removing it would destroy, then
+  removes the worktree. Clear every blocker it names and re-run; never fall back
+  to `git worktree remove`, which deletes the home without a word. Run it from
+  inside any git repository (it resolves the ticket by search, so it need not be
+  the repo that opened the worktree — but it must be *a* repo).
 ```
 
 For epic mode, retain every standard section above and insert the rendered

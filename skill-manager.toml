@@ -9,6 +9,23 @@
 #   github:haydenrear/test_graph_skill  -> skill "test-graph"
 #   github:haydenrear/tla-spec-dev      -> skill "spec-double-compiler" (installs the tla-spec-dev CLI)
 #   github:haydenrear/deploy-cdc        -> skill "deploy-helm"
+#
+# NEITHER git-integration-skill NOR git-issue-workflow-skill IS REFERENCED HERE,
+# and that is the point of this skill being the LEAF of the chain:
+#
+#   git-integration-repo  ->  git-issue-workflow  ->  git-issue
+#
+# git-integration-skill used to be a hard reference, for one file: `scripts/wt`,
+# which every issue body names by resolved path. But this skill never RUNS it.
+# It writes that path into an issue for somebody else to run, and the somebody
+# else is `git-issue-workflow` — which is where `wt` now lives and which
+# therefore guarantees the file exactly where it is needed. An author does not
+# need the implementer's tools on disk, and referencing them cost every
+# issue-authoring install a whole integration-repo unit it would never open.
+#
+# The path written into issue bodies is
+# $SKILL_MANAGER_HOME/skills/git-issue-workflow/scripts/wt — resolved, never a
+# placeholder. See references/worktree-branch.md and git-issue#4.
 skill_references = [
   "github:haydenrear/test_graph_skill",
   "github:haydenrear/tla-spec-dev",
@@ -24,5 +41,5 @@ on_path = "gh"
 
 [skill]
 name = "git-issue"
-version = "0.2.0"
+version = "0.3.0"
 description = "Create discovery-first tracker work orders with references, worktree/branch instructions, optional TLA+ close-out, and bounded assignments for one ticket in an existing epic shared workflow."
