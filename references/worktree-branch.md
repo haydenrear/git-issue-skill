@@ -30,7 +30,7 @@ cause of two field failures: one agent ran the wrong script, another concluded i
 had to write its own (git-issue#4).
 
 ```bash
-WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
 ```
 
 `SKILL_MANAGER_HOME` is exported by the launch shims every agent starts through;
@@ -50,7 +50,7 @@ the `:-` fallback is what makes the same line work from a bare shell.
 ## The instruction to embed in the issue
 
 ```bash
-WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
 
 # from anywhere inside the repo
 "$WT" new <issue-number>-<slug>
@@ -67,7 +67,7 @@ has never been given a home, `wt new` exits **3**:
 ```
 error creating worktree: no Skill Manager home could be created for this worktree
   (usually: /path/to/repo has no project home yet)
-fix: /path/to/home/skills/git-integration-repo/scripts/bootstrap-home.sh --root /path/to/repo
+fix: /path/to/home/skills/git-issue-workflow/scripts/bootstrap-home.sh --root /path/to/repo
 log: /tmp/wt-XXXXXX-run.log
 ```
 
@@ -107,7 +107,7 @@ State it concretely rather than in the abstract, e.g.:
 ## Worktree & branch
 Create the worktree AND its own Skill Manager home with ONE command, from the
 repo root. Same command for a plain repo and an integration repo:
-`WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"`
+`WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"`
 `"$WT" new <issue-number>-<slug>`
 
 It prints `created worktree <path>` — cd to that path (it is
@@ -144,7 +144,7 @@ worktree — but **the home is checked first**, because the removal is what dest
 it:
 
 ```bash
-WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
 "$WT" close <issue-number>-<slug>
 ```
 

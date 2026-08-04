@@ -124,7 +124,7 @@ command, it is the same in a plain repo and an integration repo, and it runs the
 gate and the removal in that order, refusing on a non-zero verdict:
 
 ```bash
-WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-integration-repo/scripts/wt"
+WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
 "$WT" close <ticket>
 ```
 
