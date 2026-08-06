@@ -36,11 +36,14 @@ does. The inventory is what turns "make ingest faster" into "p99 ingest latency
 ≤ 250ms at 5k rps, measured by `scripts/bench_ingest.py --profile epic`, from
 412ms today". Use it to answer three things before writing the body:
 
-- **Is there a command that decides this?** If yes, that is the
+- **Is there an instrument that decides this?** If yes, that is the
   `Metric / harness` bullet. If no, the honest options are to scope the issue to
   build the harness, route to `git-epic-workflow` so a wave-1 ticket builds it
   and measures the baseline, or record `N/A: <reason>` — not to write a goal
-  nobody can run.
+  nobody can decide. The instrument does not have to be a command: an artifact
+  scored against a versioned rubric by judges who cite it is an instrument, and
+  in some repositories it is the *better* one, because a number computed from an
+  artifact can be improved by editing the artifact.
 - **Is there a baseline?** A target with no baseline is unfalsifiable. Prefer a
   recorded number; otherwise say `unmeasured` and name how the implementer
   measures it before changing behavior.
@@ -64,7 +67,7 @@ git ls-files 'results/**' 'baselines/**' '**/baseline*' 2>/dev/null
 
 Record what you *didn't* find, too. "No benchmark exists for this path" is a
 discovery result that changes the issue — it is the difference between a goal
-with a deciding command and a goal that needs one built first.
+with a deciding instrument and a goal that needs one built first.
 
 ## How to record it
 
@@ -86,7 +89,7 @@ git grep -n "<feature-keyword>"
 ## Decisions to lock before writing
 
 - **References list** — the files/symbols/specs above.
-- **Goal and what decides it** — the metric, the deciding command, today's value,
+- **Goal and what decides it** — the metric, the deciding instrument, today's value,
   the success threshold, this issue's contribution kind, and the local signal.
   Discovery supplies the *candidates*; the user agrees the goal and target. If
   nothing here is measurable, lock that as `N/A: <reason>`.

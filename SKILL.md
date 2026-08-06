@@ -5,7 +5,7 @@ description: >-
   especially GitHub issues via the `gh` CLI. Drives a discovery-first workflow:
   scan the repo before writing, embed a References section as the implementer's
   discovery starting point, name the measurable goal the change is aimed at and
-  the command that decides it, tell the implementer to create a worktree and
+  the instrument that decides it, tell the implementer to create a worktree and
   feature branch, optionally bind the issue to one ticket in an owner-created
   epic/* shared spec workflow, decide whether a TLA+ spec workflow is needed
   (Internal.tla / External.tla changes, test-graph and unit-test adapter updates
@@ -41,12 +41,15 @@ exactly which tests close it out.
 An issue that says what it changes but not what should be measurably better
 afterwards hands the implementer no result to aim at, and produces a PR whose
 only claim is "tests pass". So goal linkage is part of every work order, not
-only epic ones: a metric with a command that decides it, never an adjective. An
-issue with no measurable outcome says so explicitly (`N/A: <reason>`) rather
-than dropping the section. The canonical contract for goal kinds, baselines,
-contribution kinds, and the evaluation-ticket role is
+only epic ones: a metric with a named instrument that decides it, never an
+adjective. An issue with no measurable outcome says so explicitly
+(`N/A: <reason>`) rather than dropping the section. The canonical contract for
+goal kinds, baselines, contribution kinds, judged versus mechanical instruments,
+and the evaluation-ticket role is
 `<git-epic-workflow-skill>/references/goals-and-evaluation.md`; this skill
-captures the same fields under the same names.
+captures the same fields under the same names. Its worked example of a judged
+instrument is `tla-spec-dev`'s `references/eval_scorecard.md`, which stays the
+authority on that card — this skill adds no fields of its own for it.
 
 An issue may instead be one scheduled slice of an existing epic. In that mode,
 keep the ordinary work-order sections and add the marker-delimited assignment
@@ -65,11 +68,14 @@ tracker, keep every step below and swap only the create/comment/close commands.
    benchmarks, eval datasets and scorers, perf-marked suites, end-to-end graphs,
    recorded baselines. See `references/discovery.md`.
 2. **Capture the goal and what decides it.** Before writing the body, ask the
-   user what should be measurably better after this issue, which command decides
-   it, what that command reports today, and which threshold counts as success.
-   Then state this issue's relation to that goal — `direct`, `enabling`, or
-   `guard` — with the effect it is expected to produce and a cheap local signal
-   the implementer can run in its own worktree. Do not invent a metric, a
+   user what should be measurably better after this issue, which instrument
+   decides it — a command, or a judged procedure with its rubric — what it
+   reports today, and which threshold counts as success (or that there
+   deliberately is none). Then state this issue's relation to that goal —
+   `direct`, `enabling`, or `guard` — with the effect it is expected to produce
+   and a cheap local signal the implementer can run in its own worktree. A
+   judged instrument is rarely the right local signal: judging is expensive, and
+   a rubric's own noise can swamp one ticket's movement. Do not invent a metric, a
    baseline, or a target the user did not agree to: ask, or record
    `N/A: <reason>`. The measurement inventory from move 1 is what makes a
    specific goal writable instead of an adjective. In epic mode these fields are
@@ -112,7 +118,7 @@ what the issue body must contain:
 
 - **What does this touch?** The file/symbol list becomes the References section.
 - **What should be measurably better, and what decides it?** The metric, the
-  deciding command, today's value, and the success threshold become the
+  deciding instrument, today's value, and the success threshold become the
   `## Goals & evaluation` section (move 2). Ask the user; do not derive a target
   from the codebase. If there is genuinely nothing to measure, the answer is
   `N/A: <reason>`, which is a recorded decision rather than a skipped question.
@@ -142,7 +148,8 @@ Signals that this is an epic rather than an issue:
 
 - the outcome is only measurable after several slices have landed together;
 - one slice exists to build the harness or baseline the others are judged by;
-- the deciding command has to run on an integrated branch, not in one worktree;
+- the deciding instrument has to run on an integrated branch, not in one
+  worktree;
 - the `## Goals & evaluation` section would name a "decided by" ticket that does
   not exist yet.
 
@@ -161,7 +168,7 @@ explicitly rather than deleting it — the implementer relies on the shape.
 
 ## Goals & evaluation
 - **Goal**: <what should be measurably better after this issue>
-- **Metric / harness**: <exact command that decides it>
+- **Metric / harness**: <the instrument that decides it: an exact command, or a judged procedure and its rubric>
 - **Baseline → target**: <today's value> → <threshold that counts as success>
 - **This issue's contribution**: direct | enabling | guard — <expected effect>
 - **Local signal**: <cheap command the implementer runs in its own worktree, or N/A: reason>
@@ -211,7 +218,8 @@ Run these to close the issue:
 - Close the spec ticket via spec-double-compiler + tla-spec-dev
 - Run spec unit tests and unit tests
 - Commit and push to `feature/<issue-number>-<slug>`
-<<<<<<< HEAD
+- Report the goal contribution in the PR body (`## Goal contribution`): expected
+  effect, measured local signal or `N/A: reason`, and what decides the goal
 - Tear the worktree down with `"$WT" close <issue-number>-<slug>` — one command,
   same in both repo shapes. It runs the home close-out gate first and **refuses**
   while the worktree still holds skill work that removing it would destroy, then
@@ -219,13 +227,6 @@ Run these to close the issue:
   to `git worktree remove`, which deletes the home without a word. Run it from
   inside any git repository (it resolves the ticket by search, so it need not be
   the repo that opened the worktree — but it must be *a* repo).
-=======
-- Report the goal contribution in the PR body (`## Goal contribution`): expected
-  effect, measured local signal or `N/A: reason`, and what decides the goal
-- Run `skill-manager home close-out --home <worktree>/.skill-manager --into <repo-root>/.skill-manager`
-  and clear every blocker **before** `git worktree remove` (integration repo:
-  `close-change.sh <ticket>`, which gates the removal itself)
->>>>>>> 04bef47 (2: make goal/evaluation linkage a first-class part of the issue work order)
 ```
 
 ### Filling `## Goals & evaluation`
@@ -233,13 +234,24 @@ Run these to close the issue:
 - Every bullet is filled or explicitly `N/A: <reason>`. Never delete the section
   and never leave a placeholder: an omitted section reads as "no goal was
   considered", which is exactly what this section exists to rule out.
-- **Metric / harness** is a command someone can run, not a description of one. A
-  goal nobody can run is a slogan — either find the harness in the measurement
-  inventory (`references/discovery.md`), scope the issue to build it, or record
-  the goal as `N/A: <reason>`.
+- **Metric / harness** names the instrument that decides the goal. Usually that
+  is a command someone can run; it may instead be a **judged procedure** — an
+  artifact scored against a versioned rubric by judges who cite the artifact —
+  or a mechanical block read beside a judged one. Write which, concretely. A
+  goal nobody can decide is a slogan; a goal decided by judgement is not a
+  slogan just because a human runs it. Either find the instrument in the
+  measurement inventory (`references/discovery.md`), scope the issue to build
+  it, or record the goal as `N/A: <reason>`.
 - **Baseline → target** needs both halves. A target with no baseline is
   unfalsifiable; if the number has not been measured, write
   `unmeasured — <how the implementer measures it first>` rather than guessing.
+  Two shapes are legitimately not a threshold, and both are written plainly
+  rather than dressed up as one: a **multi-clause target**, whose clauses can
+  settle differently and are reported one verdict each; and a goal that is
+  **building the instrument**, whose target says there is deliberately no
+  threshold on the number, because choosing one before anything can produce a
+  number is inventing the answer. Where the instrument is a judged one, the
+  baseline cites the prior scored run rather than a recollection.
 - **Contribution** is one of `direct` (this change is expected to move the
   metric — give a directional or numeric effect), `enabling` (`none — enabling
   only`, plus what it unblocks), or `guard` (must not regress this metric while
@@ -270,8 +282,9 @@ the issue is worked (`references/epic-assignment.md`).
    (`references/github-gh.md`).
 2. Discover (`references/discovery.md`) → collect References, the measurement
    inventory, and regression scope.
-3. Settle the goal: metric, deciding command, today's value, success threshold,
-   this issue's contribution, and its local signal — asked of the user for an
+3. Settle the goal: metric, deciding instrument, today's value, success
+   threshold, this issue's contribution, and its local signal — asked of the
+   user for an
    ordinary issue, copied from the assignment in epic mode, or recorded as
    `N/A: <reason>`. If the outcome needs several slices, route to
    `git-epic-workflow` instead of filing one issue.

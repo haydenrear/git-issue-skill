@@ -111,9 +111,9 @@ never confused:
 ```markdown
 ## Goal verdicts
 
-| Goal | Kind | Baseline | Measured | Target | Verdict | Evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| <goal> | perf \| eval \| integration \| quality | <value + commit it was measured on> | <what the harness reported> | <threshold> | met \| missed \| unmeasured | <evidence path> |
+| Goal | Clause | Kind | Baseline | Measured | Target | Verdict | Evidence |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| <goal> | <clause, or —> | perf \| eval \| integration \| quality | <value + commit it was measured on> | <what the instrument reported> | <threshold> | met \| missed \| unmeasured | <evidence path> |
 ```
 
 Verdicts are exactly `met`, `missed`, or `unmeasured` (with a reason). Run the
@@ -124,6 +124,20 @@ is a decision for the owner (add work, accept the shortfall with a recorded
 reason, or re-scope the goal), not something for the evaluation issue to fix by
 adjusting what it measures. A silently unmeasured goal is the failure this whole
 section exists to prevent.
+
+**One row per clause, not per goal.** A target with several clauses can settle
+differently on each — met on one, missed on another — and a single token has to
+pick which clause it refers to, which is how the flattering one gets picked. Use
+`—` in the Clause column when there is only one. A goal whose target is
+deliberately not a threshold still gets a row: `Measured` is what the instrument
+produced on its first real run, `Target` restates the no-threshold decision, and
+the verdict says whether the instrument ran and discriminated.
+
+Where the deciding instrument is a **judged** one, its own documentation governs
+how the result is produced, sealed, and compared — rubric version, blinding,
+sealing, and the rules for when two numbers are comparable at all. Cite it and
+follow it; this skill restates none of it. For `tla-spec-dev` that is
+`references/eval_scorecard.md`.
 
 The implementer's half of this contract — how the signal is run and classified,
 and how an evaluation ticket executes — is `git-issue-workflow`'s
