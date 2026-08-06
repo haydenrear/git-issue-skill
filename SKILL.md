@@ -54,15 +54,25 @@ tracker, keep every step below and swap only the create/comment/close commands.
    discovery output as a *starting point* for the implementer — concrete files,
    symbols, specs, and docs, each as `path:line` where possible. Create it with
    `gh issue create`. See `references/github-gh.md` and the template below.
-3. **Instruct a worktree + feature branch.** The issue embeds **one command**
-   that creates the worktree and its own Skill Manager home together — `wt new`,
-   spelled as a path that resolves without the reader looking anything up — plus
-   what to do about that home: that a skill edit inside it is in no diff, and
-   that teardown is gated. Never instruct a bare `git worktree add`; it produces
-   a worktree with no home. An epic assignment instead names the exact worktree
-   and branch created from the epic branch, and is the one case that does branch
-   by hand. See `references/worktree-branch.md` and
-   `references/epic-assignment.md`.
+3. **Instruct a worktree + feature branch — both ends of it.** The issue embeds
+   **two** commands, not one: `wt new` to create the worktree and its own Skill
+   Manager home together, and `wt close` to tear it down through the gate. Both
+   are shipped by **git-issue-workflow**, and both must be spelled as a path
+   that resolves without the reader looking anything up. Carry the home facts
+   with them: that a skill edit inside that home is in no diff, and that
+   teardown is gated and will refuse while the worktree still holds work.
+
+   Write the teardown command even though it runs last. An issue that says how
+   to start and not how to finish is how an implementer ends up at
+   `git worktree remove`, which deletes the home — and the unpublished skill
+   edits in it — without a word. The same reasoning applies to the create half:
+   never instruct a bare `git worktree add`, which produces a worktree with no
+   home at all, so the agent launched in it writes the operator's global
+   `~/.skill-manager`.
+
+   An epic assignment instead names the exact worktree and branch created from
+   the epic branch, and is the one case that does branch by hand. See
+   `references/worktree-branch.md` and `references/epic-assignment.md`.
 4. **Decide the spec workflow.** During discovery, decide whether the change
    alters observable/internal state-machine behavior. If yes, the issue names
    the Internal.tla / External.tla edits, the test-graph and unit-test adapter
@@ -71,13 +81,20 @@ tracker, keep every step below and swap only the create/comment/close commands.
    the owner scaffolds one shared workflow and each issue opens exactly its one
    planned ticket; the ticket agent never scaffolds again. See
    `references/spec-workflow.md`.
-5. **Spell out close-out.** The issue lists which test graphs run for regression
-   (including tla-spec-dev spec-graph integrations), tells the implementer to
-   attach those reports to the spec ticket that closes in the repo, close that
-   ticket via spec-double-compiler + tla-spec-dev, run spec unit tests and unit
-   tests, then commit and push to the feature branch. An epic work order supplies
-   exact validation commands and evidence paths, targets its PR at the epic
-   branch, and stops for external review. See `references/regression-close.md`.
+5. **Spell out close-out, and end it with teardown.** The issue lists which test
+   graphs run for regression (including tla-spec-dev spec-graph integrations),
+   tells the implementer to attach those reports to the spec ticket that closes
+   in the repo, close that ticket via spec-double-compiler + tla-spec-dev, run
+   spec unit tests and unit tests, commit and push to the feature branch — **and
+   then tear the worktree down with `wt close`**, which runs the home close-out
+   gate and refuses while removing it would destroy unpublished skill work.
+
+   The teardown line is not optional bookkeeping. Everything before it leaves
+   the work in a branch that survives; the worktree's *home* is the one artifact
+   nothing else records, so a close-out that stops at "push" is the step where a
+   skill edit gets lost. An epic work order supplies exact validation commands
+   and evidence paths, targets its PR at the epic branch, and stops for external
+   review. See `references/regression-close.md`.
 
 ## Before you create the issue
 
