@@ -51,6 +51,15 @@ captures the same fields under the same names. Its worked example of a judged
 instrument is `tla-spec-dev`'s `references/eval_scorecard.md`, which stays the
 authority on that card — this skill adds no fields of its own for it.
 
+**An issue names a rubric; it never copies one.** Write which rubric, which
+version, how many judges, and where the evidence lands, then link the rubric. Do
+not paste its dimensions, its anchors, its scoring rules or its comparability
+rules into an issue body: the rubric's own repository versions those and runs
+checks over them, and a copy in a tracker has nothing behind it. The failure is
+measured rather than hypothetical — a charter in `tla-spec-dev` restated a table
+of judged results and two of its rows were wrong, carried forward across a
+change to the instrument before anyone caught them.
+
 An issue may instead be one scheduled slice of an existing epic. In that mode,
 keep the ordinary work-order sections and add the marker-delimited assignment
 from `references/epic-assignment.md`. That assignment takes precedence over
