@@ -55,9 +55,14 @@ tracker, keep every step below and swap only the create/comment/close commands.
    symbols, specs, and docs, each as `path:line` where possible. Create it with
    `gh issue create`. See `references/github-gh.md` and the template below.
 3. **Instruct a worktree + feature branch — both ends of it.** The issue embeds
-   **two** commands, not one: `wt new` to create the worktree and its own Skill
-   Manager home together, and `wt close` to tear it down through the gate. Both
-   are shipped by **git-issue-workflow**, and both must be spelled as a path
+   **two** commands, not one: one to create the worktree and its own Skill
+   Manager home together, and one to tear it down through the gate. Lead with
+   the skt form — `skt ticket new <TICKET>` and `skt ticket close <TICKET>` —
+   because `skt` is on PATH in every skill-manager home and disclosed at
+   session start, which is exactly how implementers who never read this skill
+   still find the front door. Keep the path-resolving fallback for checkouts
+   without skt: both commands are shipped by **git-issue-workflow**
+   (`skt ticket` wraps its `wt`), and the fallback must be spelled as a path
    that resolves without the reader looking anything up. Carry the home facts
    with them: that a skill edit inside that home is in no diff, and that
    teardown is gated and will refuse while the worktree still holds work.
