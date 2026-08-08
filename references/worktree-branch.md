@@ -22,12 +22,24 @@ worktree's own Skill Manager home. `wt new` does both. It handles a plain repo
 and an integration repo identically — it detects which it is standing in — so
 there is exactly one instruction to embed, whatever the target repository is.
 
-**Spell it resolved.** The script is shipped by the `git-integration-repo` unit,
-and an installed unit's files live at `$SKILL_MANAGER_HOME/skills/<unit>/`. Write
-that path out; never write `<git-integration-repo-skill>/…` or any other
-placeholder the implementer has to resolve. That placeholder is the measured
-cause of two field failures: one agent ran the wrong script, another concluded it
-had to write its own (git-issue#4).
+**Lead with skt.** In any checkout whose home carries the `skt` plugin, the
+same lifecycle is on PATH and disclosed at session start:
+
+```bash
+skt ticket new <TICKET>     # wraps wt new; prints the same contract
+skt ticket close <TICKET>   # wraps wt close; same gate, guided remedies
+```
+
+Embed that form first — it is how implementers who never read this skill still
+find the front door — and keep the resolved path as the fallback for a checkout
+without skt.
+
+**Spell the fallback resolved.** The script is shipped by the
+`git-issue-workflow` unit, and an installed unit's files live at
+`$SKILL_MANAGER_HOME/skills/<unit>/`. Write that path out; never write
+`<git-issue-workflow-skill>/…` or any other placeholder the implementer has to
+resolve. That placeholder is the measured cause of two field failures: one agent
+ran the wrong script, another concluded it had to write its own (git-issue#4).
 
 ```bash
 WT="${SKILL_MANAGER_HOME:-$HOME/.skill-manager}/skills/git-issue-workflow/scripts/wt"
