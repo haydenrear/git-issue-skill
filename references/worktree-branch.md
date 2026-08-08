@@ -73,7 +73,14 @@ cd /path/to/<repo>-<issue-number>-<slug>     # the path it just printed
 A successful run prints that one line and nothing on stderr. To branch from
 something other than the current HEAD, pass it: `"$WT" new <ticket> origin/main`.
 
-**The one refusal worth pre-empting.** On the first ticket in a repository that
+**Name the remote ref, or a resolved SHA, not a bare branch.** A bare `<base>`
+resolves to the **local** ref, and a local branch does not advance when its PRs
+are merged server-side — the shape that had a ticket branch 21 commits behind
+`origin/epic/<slug>` with no signal. `wt new` now refuses that (below), but the
+spelling above avoids the round trip entirely, and `origin/main` is already what
+this page recommends.
+
+**Two refusals worth pre-empting.** On the first ticket in a repository that
 has never been given a home, `wt new` exits **3**:
 
 ```
@@ -87,6 +94,21 @@ The `fix:` line is already absolute and already resolved — run it verbatim, th
 re-run the same `wt new`. It is a one-time step **per repository**, not per
 worktree, and it is why the issue should say "if it exits 3, run the fix line it
 prints" instead of leaving the implementer to interpret a refusal.
+
+The other is exit **7**: the base branch is BEHIND its remote counterpart.
+
+```
+error creating worktree: base epic/subtract-to-measure is 21 commit(s) behind origin/epic/subtract-to-measure — branching it would start from a superseded tree (--stale-base-ok to do it anyway)
+fix: /path/to/home/skills/git-issue-workflow/scripts/wt new <ticket> origin/epic/subtract-to-measure
+log: /tmp/wt-XXXXXX-run.log
+```
+
+`wt new` refreshes the base's own remote ref (one ref, `--no-tags`) before
+branching, and refuses if the local one trails it. The `fix:` line branches from
+the published tip and runs as printed. `--stale-base-ok` takes the local ref
+deliberately and says so on stderr; `WT_FETCH=0` skips the refresh when offline.
+An issue that names a base should say which of the two it means. Full rules:
+`git-issue-workflow`'s `references/worktrees.md` § *The branch point*.
 
 Everything else `wt` can tell you is on demand and costs nothing until asked:
 `"$WT" info <ticket>` prints WORKTREE / BRANCH / LAUNCH / IF-EXIT-8 / CLOSE (and
@@ -126,6 +148,8 @@ It prints `created worktree <path>` — cd to that path (it is
 `<parent>/<repo>-<issue-number>-<slug>`, not `../wt-...`).
 If it exits 3 with "no project home yet", run the absolute `fix:` line it printed
 (one time for this repository), then re-run the same `wt new`.
+If it exits 7, the base you named is behind its remote — run the `fix:` line,
+which branches from the published tip.
 Do not substitute `git worktree add` — that leaves the worktree with no home, and
 an agent launched in it writes the operator's global `~/.skill-manager`.
 

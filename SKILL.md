@@ -203,6 +203,10 @@ do not guess it.
 If it exits 3 saying "no project home yet", this repository has never been given
 a home. Run the absolute `fix:` line it printed — a one-time, per-repository
 step — then run the same `wt new` again.
+If it exits 7 saying the base is **behind** its remote, the branch you named is a
+local ref that has fallen behind `origin/<base>` — usual on an `epic/*` branch
+whose ticket PRs were merged server-side. Run the `fix:` line, which branches
+from the published tip; `--stale-base-ok` takes the local ref deliberately.
 Do **not** substitute `git worktree add`: that produces a worktree with no home,
 and an agent launched in it writes the operator's global `~/.skill-manager`.
 Launch through `<worktree>/.skill-manager/bin/launch/{claude,codex,gemini}`.
