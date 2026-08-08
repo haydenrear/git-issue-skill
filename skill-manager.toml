@@ -41,5 +41,5 @@ on_path = "gh"
 
 [skill]
 name = "git-issue"
-version = "0.3.0"
-description = "Create discovery-first tracker work orders with references, worktree/branch instructions, optional TLA+ close-out, and bounded assignments for one ticket in an existing epic shared workflow."
+version = "0.4.0"
+description = "Create discovery-first tracker work orders with references, a measurable goal and the instrument that decides it, worktree/branch instructions, optional TLA+ close-out, and bounded assignments for one ticket in an existing epic shared workflow."
